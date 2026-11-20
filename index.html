@@ -70,6 +70,7 @@ input[type=text]:focus{border-color:var(--y)}
 .hgrp{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.hgrp .hg{display:inline-flex;flex-wrap:wrap;align-items:center;gap:1px;background:#fff;border:2.5px dashed #6C9BFF;border-radius:12px;padding:3px 6px 4px;font-size:20px;max-width:100%}
 .hgrp .hg small{display:block;width:100%;font-size:11px;font-weight:900;color:#2F4AA8;letter-spacing:0}
 .hgrp .em{height:1.15em;width:1.15em}
+.ntag{display:inline-block;font-size:13px;font-weight:900;padding:2px 10px;border-radius:999px;margin:6px 0 2px;color:#fff}.ntag.po{background:var(--navy)}.ntag.th{background:#3B3D52}
 .chip .cf{width:46px;height:46px;object-fit:contain;display:block;margin:0 auto 2px}
 .endrow{display:flex;align-items:flex-end;gap:6px;margin:6px 0}.endrow.r{margin-top:14px}.endrow .bubble{flex:1;margin:0}
 .endrow .ef{width:74px;flex:none}.endrow .ef img{width:100%;display:block}
@@ -210,7 +211,7 @@ input[type=text]:focus{border-color:var(--y)}
 <section class="screen on" id="sSetup">
   <div class="cols"><div class="colL">
   <h1><span class="sm">🚓 수학 보물찾기</span>수학 경찰 출동!</h1>
-  <img id="heroImg" alt="경찰 강아지가 나무 뒤에 숨은 너구리 도둑을 찾아낸 장면" style="width:100%;display:block;border-radius:22px;border:4px solid #fff;box-shadow:0 6px 0 rgba(47,74,168,.15);margin:8px 0 4px">
+  <img id="heroImg" alt="바로 경찰이 나무 뒤에 숨은 너구리 도둑을 찾아낸 장면" style="width:100%;display:block;border-radius:22px;border:4px solid #fff;box-shadow:0 6px 0 rgba(47,74,168,.15);margin:8px 0 4px">
   </div><div class="colR">
   <div class="card">
     <div class="lbl">👶 누가 풀까요?</div>
@@ -219,11 +220,10 @@ input[type=text]:focus{border-color:var(--y)}
   </div>
   <div class="card">
     <div class="lbl">🎁 보물 숨기기 <small>보호자가 적어 주세요</small></div>
-    <div class="field"><input type="text" id="tPlace" maxlength="40" placeholder="보물 장소 (예: 거실 소파 쿠션 밑)"></div>
-    <div class="field" style="margin:0"><input type="text" id="tItem" maxlength="40" placeholder="보물 내용 (예: 초코 쿠키 2개)"></div>
+    <div class="field" style="margin:0"><input type="text" id="tPlace" maxlength="40" placeholder="보물 장소 (예: 거실 소파 쿠션 밑)"></div>
   </div>
   <button class="btn" id="goIntro">🚓 출동 준비 완료!</button>
-  <p class="note">보물 장소와 내용은 마지막 문제를 맞혀야 나와요.<br>문제는 할 때마다 새로 바뀌어요.</p>
+  <p class="note">보물 장소는 마지막 문제를 맞혀야 나와요.<br>문제는 할 때마다 새로 바뀌어요.</p>
   <p class="copy">© 다다브로맘(Dadabromom_Park)</p>
   </div></div>
 </section>
@@ -232,12 +232,12 @@ input[type=text]:focus{border-color:var(--y)}
 <section class="screen" id="sIntro">
   <h1 style="margin-top:14px">앗! 보물이 사라졌다!</h1>
   <div class="cols"><div class="colL">
-  <div class="bubble th" id="introThiefSay"></div>
+  <div class="ntag th">🦝 도둑 루피</div><div class="bubble th" id="introThiefSay"></div>
   <div class="duo">
     <div class="who bob" id="introThief"></div>
   </div>
   </div><div class="colR">
-  <div class="bubble po" id="introPoliceSay"></div>
+  <div class="ntag po">🐶 바로 경찰</div><div class="bubble po" id="introPoliceSay"></div>
   <div class="duo"><div class="who spark" id="introPoliceWrap" style="width:40%"><div id="introPolice"></div></div></div>
   </div></div>
   <button class="btn blue" id="goPlay" style="margin-top:10px">🚨 출동!</button>
@@ -279,7 +279,6 @@ input[type=text]:focus{border-color:var(--y)}
     <img class="chest" id="chestImg" alt="보물상자" style="width:58%;max-width:200px;margin:0 auto">
     <div class="tt">🎉 보물을 찾았어요!</div>
     <div class="tline"><div class="k">📍 보물이 있는 곳</div><div class="v" id="rPlace"></div></div>
-    <div class="tline"><div class="k">🎁 보물</div><div class="v" id="rItem"></div></div>
   </div>
   <div class="row2">
     <button class="btn" id="again" style="font-size:17px">🔄 새 문제로<br>다시 하기</button>
@@ -1095,10 +1094,10 @@ function renderSetup(){
   $('heroImg').src=IMG.hero;
   $('lvChips').innerHTML=Object.entries(LV).map(([k,v])=>`<button class="chip${S.lv===k?' on':''}" data-lv="${k}"><img class="cf" alt="" src="${IMG[{k:'p_01',g1:'p_02',g2:'p_06',g3:'p_11'}[k]]}"><b>${v.name}</b><span>${v.desc}</span></button>`).join('');
   $('lvChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{S.lv=c.dataset.lv;sTap();renderSetup();});pCount();
-  $('tPlace').value=S.place;$('tItem').value=S.item;
+  $('tPlace').value=S.place;
 }
-function save(){S.place=$('tPlace').value.trim();S.item=$('tItem').value.trim();try{localStorage.setItem('mathcop',JSON.stringify(S));}catch(e){}}
-['tPlace','tItem'].forEach(i=>$(i).addEventListener('input',save));
+function save(){S.place=$('tPlace').value.trim();try{localStorage.setItem('mathcop',JSON.stringify(S));}catch(e){}}
+$('tPlace').addEventListener('input',save);
 
 function addSparks(){
   const w=$('introPoliceWrap');w.querySelectorAll('.sp').forEach(e=>e.remove());
@@ -1276,7 +1275,6 @@ function finish(delay){
     const ep=pick(END_P),et=pick(END_T);$('endP').textContent=fill(LN[ep][2]);setV($('endP'),ep);
     $('endT').textContent=LN[et][2];setV($('endT'),et);$('endPf').innerHTML=im(pick(['q2','q1','q5',FA(ep)]));$('endTf').innerHTML=im(pick(['z6','z8','z9',FA(et)]));
     $('rPlace').textContent=S.place||'보호자에게 물어보세요!';
-    $('rItem').textContent=S.item||'두근두근 깜짝 선물!';
     show('sEnd');confetti();setTimeout(()=>play('sparkle'),2600);
     setTimeout(()=>{if($('sEnd').classList.contains('on'))talk([[ep,$('endP')],[et,$('endT')]]);},1300);
   },delay||350);
