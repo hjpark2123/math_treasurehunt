@@ -816,11 +816,17 @@ const GEO_POOL = {
 
 // ===== 추가 문제 (연산 + 새 영역) =====
 const PLACE = ['보물 창고', '비밀 동굴', '나무 위 오두막', '놀이터 미끄럼틀 밑', '도서관 책장 뒤', '빵집 뒷문', '공원 벤치', '지하 비밀 통로'];
-const WHO = () => pick(['지우가', '서아가', '하루가', '유나가', '시우가', '다미가', '토끼가', '다람쥐가']);
+// 문제에 나오는 아이 이름 (받침 있는 이름은 '하준이'처럼 불러요)
+const NAMES = ['다겸', '다민', '범서', '범진', '서은', '리아', '윤아', '하윤', '하율', '하준', '이현', '준서', '윤우', '시언', '시현',
+  '서준', '도윤', '이준', '은우', '예준', '선우', '연우', '로운', '이안', '시우', '지우', '서아', '하은', '수아', '지아', '아린', '하린', '유주', '채아', '소율'];
+const hasB = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c % 28 > 0; };
+const KN = n => hasB(n) ? n + '이' : n;
+const KIDNAMES = NAMES.map(KN);
+const WHO = () => pick(KIDNAMES) + '가';
 const SNACK = [['사탕', '🍬'], ['쿠키', '🍪'], ['젤리', '🍭'], ['딸기', '🍓'], ['도넛', '🍩'], ['구슬', '🔵']];
 const picRow = (e, n, size = 28) => `<div class="pics" style="font-size:${size}px;letter-spacing:3px">${Array(n).fill(e).join('')}</div>`;
 // 힌트용: 묶음마다 이름표를 단 그림 (친구 1, 친구 2…)
-const hGroups = (e, g, k, lab) => `<div class="hgrp">${Array(g).fill(0).map((_, i) => `<span class="hg"><small>${lab}${i + 1}</small>${Array(k).fill(e).join('')}</span>`).join('')}</div>`;
+const hGroups = (e, g, k, lab) => { const nm = lab === '친구' ? shuffle(NAMES).slice(0, g) : null; return `<div class="hgrp">${Array(g).fill(0).map((_, i) => `<span class="hg"><small>${nm ? nm[i] : lab + (i + 1)}</small>${Array(k).fill(e).join('')}</span>`).join('')}</div>`; };
 const groups = (e, g, k) => `<div class="pics grp">${Array(g).fill(0).map(() => `<span class="gp">${Array(k).fill(e).join('')}</span>`).join('')}</div>`;
 function coinSVG(list) { // list: [100,100,10,...]
   const col = { 500: '#E8E8EF', 100: '#E8E8EF', 50: '#E8E8EF', 10: '#F0B27A' };
