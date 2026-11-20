@@ -76,6 +76,11 @@ input[type=text]:focus{border-color:var(--y)}
 .ctog .sw{grid-row:span 2;width:44px;height:26px;border-radius:99px;background:#C9CEE0;position:relative;transition:.2s}.ctog .sw::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
 .ctog.on{border-color:var(--navy);background:#EEF2FF}.ctog.on .sw{background:var(--mint)}.ctog.on .sw::after{left:21px}
 .pdim{opacity:.35;pointer-events:none}
+.sdrow{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.sdc{width:54px;height:54px;border-radius:12px;background:#fff;border:3px solid #C9D3F5;display:grid;place-items:center;font-size:28px;font-weight:900}
+.sdc.q{background:var(--navy);color:#fff;border-color:var(--navy)}
+.story{background:#FFFBEA;border:2px dashed #E9C64A;border-radius:14px;padding:10px 12px;margin:2px 0 10px;line-height:1.75;font-size:17px}
+.cmp{text-align:left}.cmprow{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:4px 0;border-bottom:2px dashed #E0E5F2}.cmprow:last-child{border:0}.cmprow .cl{margin-right:6px;padding-right:6px;border-right:3px solid #C9D3F0}
 .chip .cf{width:46px;height:46px;object-fit:contain;display:block;margin:0 auto 2px}
 .endrow{display:flex;align-items:flex-end;gap:6px;margin:6px 0}.endrow.r{margin-top:14px}.endrow .bubble{flex:1;margin:0}
 .endrow .ef{width:74px;flex:none}.endrow .ef img{width:100%;display:block}
@@ -1041,12 +1046,386 @@ const AR_POOL = {
   g3: ['calc', 'word', 'symbol', 'seq', 'rev', 'train', 'compare', 'cards', 'money', 'mulpic', 'divpic', 'balance'],
 };
 
+// ===== 추가 문제 2차 (학년별 새 유형) =====
+const NJ = (n, a, b) => n + ((n % 10 === 0 || [1, 3, 6, 7, 8].includes(n % 10)) ? a : b); // 숫자 뒤 조사
+const DOTS = { 1: [[1, 1]], 2: [[0, 0], [2, 2]], 3: [[0, 0], [1, 1], [2, 2]], 4: [[0, 0], [2, 0], [0, 2], [2, 2]], 5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]], 6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]] };
+function dieSVG(n, x, y, s, col) {
+  let g = `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="${s * .18}" fill="${col || '#fff'}" stroke="#2B2D42" stroke-width="3.5"/>`;
+  DOTS[n].forEach(([cx, cy]) => g += `<circle cx="${x + s * (.22 + cx * .28)}" cy="${y + s * (.22 + cy * .28)}" r="${s * .085}" fill="${n === 1 ? '#E5484D' : '#2B2D42'}"/>`);
+  return g;
+}
+function tableSVG(op, lv) {
+  const big = op === '×' ? 9 : lv === 'g1' ? 9 : 9;
+  const rows = shuffle([...Array(big)].map((_, i) => i + 1)).slice(0, 3).sort((a, b) => a - b);
+  const cols = shuffle([...Array(big)].map((_, i) => i + 1)).slice(0, 3).sort((a, b) => a - b);
+  const bi = R(0, 2), bj = R(0, 2); const f = (a, b) => op === '×' ? a * b : a + b;
+  const W = 58; let g = '';
+  const cell = (x, y, t, fill, col, fs) => `<rect x="${x}" y="${y}" width="${W}" height="${W - 10}" fill="${fill}" stroke="#2B2D42" stroke-width="2"/><text x="${x + W / 2}" y="${y + (W - 10) / 2 + 8}" font-size="${fs || 22}" font-weight="900" text-anchor="middle" fill="${col || '#2B2D42'}">${t}</text>`;
+  g += cell(10, 10, op, '#FFD43B', '#2B2D42', 26);
+  cols.forEach((c, j) => g += cell(10 + (j + 1) * W, 10, c, '#EEF2FF', '#2F4AA8'));
+  rows.forEach((r, i) => {
+    g += cell(10, 10 + (i + 1) * (W - 10), r, '#EEF2FF', '#2F4AA8');
+    cols.forEach((c, j) => g += cell(10 + (j + 1) * W, 10 + (i + 1) * (W - 10), i === bi && j === bj ? '?' : f(r, c), i === bi && j === bj ? '#2F4AA8' : '#fff', i === bi && j === bj ? '#fff' : '#2B2D42'));
+  });
+  return { svg: SVG(4 * W + 20, 4 * (W - 10) + 20, g), a: f(rows[bi], cols[bj]), r: rows[bi], c: cols[bj] };
+}
+Object.assign(GEO, {
+  // 주사위 눈 더하기
+  k_dice(lv) {
+    const n = lv === 'k' ? 2 : pick([2, 2, 3]); const v = [...Array(n)].map(() => R(1, 6));
+    let g = ''; v.forEach((d, i) => g += dieSVG(d, 14 + i * 96, 14, 80, ['#fff', '#FFF3D6', '#EEF2FF'][i]));
+    return { a: v.reduce((a, b) => a + b, 0), t: '주사위 놀이', i: '🎲', q: `주사위를 ${n}개 던졌어! 나온 눈을 <b>모두 더하면</b> 얼마일까?${SVG(n * 96 + 14, 108, g)}`, h: `주사위마다 점을 세어 봐: ${v.join(' + ')}`, tip: '주사위마다 점을 하나씩 세어 봐!' };
+  },
+  // 누가 몇 개 더 많을까 (그림 비교)
+  k_more(lv) {
+    const [[n1, e1], [n2, e2]] = shuffle([['사과', '🍎'], ['딸기', '🍓'], ['쿠키', '🍪'], ['사탕', '🍬'], ['도넛', '🍩']]).slice(0, 2);
+    const a = R(lv === 'k' ? 3 : 5, lv === 'k' ? 8 : 15), b = R(1, a - 1);
+    const [x, y] = shuffle([[n1, e1, a], [n2, e2, b]]);
+    const row = ([nm, e, c]) => `<div class="cmprow"><span class="cl">${e}</span>${Array(c).fill(e).join('')}</div>`;
+    return { a: a - b, t: '몇 개 더 많을까?', i: '⚖️', q: `${J(x[0], '과', '와')} ${y[0]} 중에서 <b>더 많은 것은 몇 개 더</b> 많을까?<div class="pics cmp">${row(x)}${row(y)}</div>`, h: `하나씩 짝을 지어 봐! 짝이 없이 남는 것이 몇 개야? (${a} − ${b})`, tip: '하나씩 짝을 지어 보면 쉽게 알 수 있어!' };
+  },
+  // 모으기·가르기 (체리 그림)
+  g1_split(lv) {
+    const n = R(lv === 'k' ? 3 : 5, lv === 'k' ? 9 : 18), a = R(1, n - 1), b = n - a; const merge = Math.random() < .35;
+    const top = merge ? '?' : n, l = merge ? a : a, r = merge ? b : '?';
+    const g = `<line x1="120" y1="58" x2="70" y2="118" stroke="#2B2D42" stroke-width="4"/><line x1="120" y1="58" x2="170" y2="118" stroke="#2B2D42" stroke-width="4"/>
+      <circle cx="120" cy="44" r="34" fill="${top === '?' ? '#2F4AA8' : '#FFB4C2'}" stroke="#2B2D42" stroke-width="3.5"/><text x="120" y="54" font-size="28" font-weight="900" text-anchor="middle" fill="${top === '?' ? '#fff' : '#2B2D42'}">${top}</text>
+      <circle cx="70" cy="134" r="30" fill="#FFB4C2" stroke="#2B2D42" stroke-width="3.5"/><text x="70" y="144" font-size="26" font-weight="900" text-anchor="middle">${l}</text>
+      <circle cx="170" cy="134" r="30" fill="${r === '?' ? '#2F4AA8' : '#FFB4C2'}" stroke="#2B2D42" stroke-width="3.5"/><text x="170" y="144" font-size="26" font-weight="900" text-anchor="middle" fill="${r === '?' ? '#fff' : '#2B2D42'}">${r}</text>`;
+    return { a: merge ? n : b, t: merge ? '모으기' : '가르기', i: '🍒', q: merge ? `${NJ(a, '과', '와')} ${NJ(b, '을', '를')} <b>모으면</b> 얼마가 될까?${SVG(240, 172, g)}` : `${NJ(n, '을', '를')} ${NJ(a, '과', '와')} □로 <b>가르기</b> 했어. □는 얼마일까?${SVG(240, 172, g)}`, h: merge ? `${a} + ${b}` : `${n}에서 ${NJ(a, '을', '를')} 빼 봐: ${n} − ${a}`, tip: merge ? '두 수를 모으면 더하기야!' : '전체에서 아는 수를 빼면 돼!' };
+  },
+  // 덧셈표 빈칸
+  g1_addtable(lv) { const T = tableSVG('+', lv); return { a: T.a, t: '덧셈표 빈칸', i: '🔢', q: `덧셈표에서 <b>?</b>에 들어갈 수는 얼마일까?${T.svg}`, h: `?의 줄 맨 앞 수 ${T.r}와 맨 위 수 ${T.c}를 더해 봐: ${T.r} + ${T.c}`, tip: '왼쪽 수와 위쪽 수를 더하면 돼!' }; },
+  // 곱셈표 빈칸
+  g2_multable(lv) { const T = tableSVG('×', lv); return { a: T.a, t: '곱셈표 빈칸', i: '✖️', q: `곱셈표에서 <b>?</b>에 들어갈 수는 얼마일까?${T.svg}`, h: `왼쪽 ${T.r}와 위쪽 ${T.c}를 곱해 봐: ${T.r} × ${T.c} (${T.c}단)`, tip: '왼쪽 수와 위쪽 수를 곱하면 돼!' }; },
+  // 몇 시간 뒤 시각
+  g1_clockplus(lv) {
+    const h = R(1, 12), k = R(1, lv === 'g1' ? 3 : 5); const a = (h + k - 1) % 12 + 1;
+    return { a, t: '시간 뒤 시각', i: '⏰', q: `지금 시각이야. <b>${k}시간 뒤</b>에는 몇 시일까? <b>'시'</b>를 숫자로 눌러 줘.${clockSVG(h, 0)}`, h: `짧은바늘이 ${h}에 있어. 숫자를 ${k}칸 더 가 봐! ${h + k > 12 ? '(12 다음은 다시 1이야)' : ''}`, tip: '짧은바늘을 한 칸씩 옮겨 봐!' };
+  },
+  // 세 자리 수 자릿값 (수 모형)
+  g2_place(lv) {
+    const h = R(1, 4), t = R(0, 5), o = R(1, 9);
+    let g = '', x = 10;
+    for (let i = 0; i < h; i++) { g += `<rect x="${x}" y="10" width="54" height="54" fill="#FFD43B" stroke="#2B2D42" stroke-width="2"/>`; for (let k = 1; k < 10; k++) g += `<line x1="${x + k * 5.4}" y1="10" x2="${x + k * 5.4}" y2="64" stroke="#C99400"/><line x1="${x}" y1="${10 + k * 5.4}" x2="${x + 54}" y2="${10 + k * 5.4}" stroke="#C99400"/>`; x += 62; }
+    for (let i = 0; i < t; i++) { g += `<rect x="${x}" y="10" width="7" height="54" fill="#6C9BFF" stroke="#2B2D42" stroke-width="1.5"/>`; x += 11; }
+    x += 6; for (let i = 0; i < o; i++) { g += `<rect x="${x + (i % 3) * 9}" y="${10 + Math.floor(i / 3) * 9}" width="7" height="7" fill="#FF8FB1" stroke="#2B2D42" stroke-width="1.2"/>`; }
+    x += 30;
+    const a = h * 100 + t * 10 + o;
+    if (Math.random() < .5) return { a, t: '수 모형 읽기', i: '🧱', q: `노란 판은 <b>100</b>, 파란 막대는 <b>10</b>, 분홍 칸은 <b>1</b>이야. 모두 얼마일까?${SVG(Math.max(x + 10, 200), 76, g)}`, h: `100이 ${h}개, 10이 ${t}개, 1이 ${o}개 → ${h * 100} + ${t * 10} + ${o}`, tip: '백 모형, 십 모형, 일 모형을 따로 세어 봐!' };
+    const n = R(1, 9) * 100 + R(1, 9) * 10 + R(1, 9), ds = String(n).split(''), k = R(0, 1), d = +ds[k];
+    return { a: d * [100, 10][k], t: '자릿값', i: '🔢', q: `<div class="eqbox eqbig">${ds.map((x, i) => i === k ? `<span style="color:#E5484D">${x}</span>` : x).join('')}</div>빨간 숫자 <b>${NJ(d, '은', '는')}</b> 얼마를 나타낼까?`, h: `${d}는 ${['백', '십'][k]}의 자리 숫자야. ${d} × ${[100, 10][k]}`, tip: '어느 자리에 있는 숫자인지 먼저 봐!' };
+  },
+  // 삼각형 조각 세기
+  g2_tri(lv) {
+    const n = R(3, 8); let g = ''; const s = 44;
+    for (let i = 0; i < n; i++) { const x = 10 + Math.floor(i / 2) * s + (i % 2 ? s / 2 : 0), up = i % 2 === 0;
+      g += up ? `<polygon points="${x},${70} ${x + s / 2},${70 - s * .87} ${x + s},${70}" fill="${COLS[i % 6]}" stroke="#2B2D42" stroke-width="2.5"/>` : `<polygon points="${x},${70 - s * .87} ${x + s},${70 - s * .87} ${x + s / 2},${70}" fill="${COLS[(i + 3) % 6]}" stroke="#2B2D42" stroke-width="2.5"/>`; }
+    return { a: n, t: '도형 조각 세기', i: '🔺', q: `색종이 띠를 잘랐더니 이런 모양이 됐어. 작은 <b>삼각형 조각</b>은 몇 개일까?${SVG(Math.ceil(n / 2) * s + s / 2 + 20, 84, g)}`, h: '위로 뾰족한 삼각형과 아래로 뾰족한 삼각형을 모두 세어 봐!', tip: '빠뜨리지 않게 왼쪽부터 차례로 세어 봐!' };
+  },
+  // 나눗셈 몫과 나머지 (그림)
+  g3_rem(lv) {
+    let k, q, r; do { k = R(3, 6); q = R(2, 5); r = R(1, k - 1); } while (k * q + r > 30);
+    const n = k * q + r; const [nm, e] = pick(SNACK); const askR = Math.random() < .5;
+    return { a: askR ? r : q, t: askR ? '나머지 구하기' : '몫 구하기', i: '➗', q: `${nm} ${n}개를 한 봉지에 ${k}개씩 담았어.${picRow(e, n, 22)}<div class="eqbox">${n} ÷ ${k} = 몫 □ … 나머지 △</div>${askR ? '<b>나머지(△)</b>' : '<b>몫(□)</b>'}는 얼마일까?`, h: `${k}개씩 묶어 봐!${hGroups(e, q, k, '봉지')}${r ? `<div class="hgrp"><span class="hg" style="border-color:#E5484D"><small style="color:#E5484D">남은 것</small>${Array(r).fill(e).join('')}</span></div>` : ''}`, tip: '나머지는 나누는 수보다 항상 작아!' };
+  },
+  // 곱셈 세로셈 빈칸
+  g3_vmul(lv) {
+    const a = R(12, 49), b = R(2, 6), p = a * b, ps = String(p).split(''), k = pick(ps.map((d, i) => +d >= 1 ? i : -1).filter(i => i >= 0));
+    const W = 36, w = 3 * W + 40; const col = (s, i) => 10 + w - 10 - (s.length - i) * W;
+    let g = '';
+    String(a).split('').forEach((d, i, arr) => g += `<text x="${col(arr, i) + W / 2}" y="40" font-size="30" font-weight="900" text-anchor="middle">${d}</text>`);
+    g += `<text x="20" y="80" font-size="28" font-weight="900">×</text><text x="${col([String(b)], 0) + W / 2}" y="80" font-size="30" font-weight="900" text-anchor="middle">${b}</text>`;
+    g += `<line x1="14" y1="94" x2="${w + 4}" y2="94" stroke="#2B2D42" stroke-width="3"/>`;
+    ps.forEach((d, i) => g += i === k ? `<rect x="${col(ps, i) + 3}" y="102" width="${W - 6}" height="38" rx="6" fill="#2F4AA8"/><text x="${col(ps, i) + W / 2}" y="132" font-size="28" font-weight="900" text-anchor="middle" fill="#fff">?</text>` : `<text x="${col(ps, i) + W / 2}" y="132" font-size="30" font-weight="900" text-anchor="middle">${d}</text>`);
+    return { a: +ps[k], t: '곱셈 세로셈', i: '✖️', q: `세로셈의 <b>?</b>에 들어갈 숫자는 무엇일까?${SVG(w + 14, 150, g)}`, h: `${a} × ${b}를 계산해 봐! 일의 자리부터: ${a % 10} × ${b} = ${(a % 10) * b}${(a % 10) * b >= 10 ? ' (올림 잊지 마!)' : ''}`, tip: '일의 자리부터 곱하고, 올림한 수를 더해!' };
+  },
+});
+Object.assign(GEN, {
+  // 빈칸 수 (수의 순서)
+  gapnum(L, lv) {
+    const max = lv === 'k' ? 10 : lv === 'g1' ? 50 : 100; const st = R(1, max - 3), k = R(0, 3); const seq = [st, st + 1, st + 2, st + 3];
+    if (seq[k] < 1) return null;
+    return { t: '빈칸 수', i: '🔢', a: seq[k], q: `수를 순서대로 썼어. <b>?</b>에 들어갈 수는 무엇일까?<div class="sdrow">${seq.map((v, i) => `<span class="sdc${i === k ? ' q' : ''}" style="width:auto;min-width:54px;padding:0 8px">${i === k ? '?' : v}</span>`).join('')}</div>`, h: k === 0 ? `${seq[1]} 바로 앞의 수를 생각해 봐!` : `${seq[k - 1]} 바로 다음 수를 생각해 봐!`, tip: '1씩 커지는 순서를 소리 내어 세어 봐!' };
+  },
+  // 손가락 수 세기
+  finger(L, lv) {
+    if (lv !== 'k' && lv !== 'g1') return null;
+    const H = { 1: '☝️', 2: '✌️', 5: '🖐️' }; const parts = shuffle([[5, '🖐️'], [pick([1, 2]), null]]).map(([n, e]) => [n, e || H[n]]);
+    if (Math.random() < .5) parts.push([pick([1, 2, 5]), null]); parts.forEach(p => { if (!p[1]) p[1] = H[p[0]]; });
+    const a = parts.reduce((s, p) => s + p[0], 0); if (a > 10 && lv === 'k') return null;
+    return { t: '손가락 세기', i: '✋', a, q: `친구들이 손가락을 펴서 보여 줬어. 펴진 손가락은 <b>모두 몇 개</b>일까?<div class="pics" style="font-size:44px">${parts.map(p => p[1]).join(' ')}</div>`, h: `손 하나씩 손가락을 세어 봐: ${parts.map(p => p[0]).join(' + ')}`, tip: '활짝 편 손은 손가락 5개야!' };
+  },
+  // 뛰어 세기
+  g2_skip(L, lv) {
+    if (lv === 'k' || lv === 'g1') return null;
+    const step = lv === 'g2' ? pick([10, 100, 5]) : pick([10, 100, 50, 25]); const st = R(1, lv === 'g2' ? 3 : 6) * (step >= 100 ? 100 : 10) + (step < 10 ? R(0, 9) : 0);
+    const seq = [0, 1, 2, 3, 4].map(i => st + i * step); const k = R(1, 4); if (seq[4] > 9999) return null;
+    return { t: '뛰어 세기', i: '🦘', a: seq[k], q: `<b>${step}씩</b> 뛰어 세었어. <b>?</b>에 들어갈 수는 무엇일까?<div class="sdrow">${seq.map((v, i) => `<span class="sdc${i === k ? ' q' : ''}" style="width:auto;min-width:54px;padding:0 8px;font-size:22px">${i === k ? '?' : v}</span>`).join('')}</div>`, h: `${seq[k - 1]} + ${step}`, tip: `${step}씩 커지면 어느 자리 숫자가 바뀌는지 봐!` };
+  },
+  // m와 cm
+  g2_mcm(L, lv) {
+    if (lv === 'k' || lv === 'g1') return null;
+    const m = R(1, 3), c = R(5, 95); const toCm = Math.random() < .55;
+    if (toCm) return { t: '길이 단위', i: '📏', a: m * 100 + c, q: `줄넘기 줄의 길이는 <b>${m}m ${c}cm</b>야. 모두 몇 <b>cm</b>일까?`, h: `1m = 100cm → ${m}m = ${m * 100}cm, ${m * 100} + ${c}`, tip: '1m는 100cm야!' };
+    return { t: '길이 단위', i: '📏', a: c, q: `우리 집 식탁의 길이는 <b>${m * 100 + c}cm</b>야. 이건 ${m}m □cm야. <b>□</b>는 얼마일까?`, h: `${m * 100 + c}cm = ${m * 100}cm + ${c}cm, 100cm = 1m`, tip: '100cm를 1m로 바꾸고 남은 cm를 찾아봐!' };
+  },
+  // 분수 크기 비교
+  g3_fraccmp(L, lv) {
+    if (lv !== 'g3') return null;
+    if (Math.random() < .5) { const d = R(5, 9), a = R(1, d - 3); const b = a + 2;
+      return { t: '분수 크기', i: '🍕', a: a + 1, q: `분모가 같은 분수야. <b>${a}/${d} &lt; □/${d} &lt; ${b}/${d}</b> 에서 □에 들어갈 수는?`, h: `분모가 같으면 분자가 클수록 큰 분수야. ${a}과 ${b} 사이의 수!`, tip: '분모가 같으면 분자끼리 비교해!' }; }
+    const ds = shuffle([2, 3, 4, 5, 6, 8]).slice(0, 3); const big = Math.random() < .5; const t = big ? Math.min(...ds) : Math.max(...ds);
+    return { t: '분수 크기', i: '🍕', a: t, q: `${ds.map(d => `<b>1/${d}</b>`).join(', ')} 중에서 <b>가장 ${big ? '큰' : '작은'}</b> 분수의 분모는 얼마일까?`, h: `피자를 ${ds.join(', ')}조각으로 나눈다고 생각해 봐! 조각이 ${big ? '적을수록 한 조각이 커' : '많을수록 한 조각이 작아'}!`, tip: '분자가 1이면 분모가 작을수록 큰 분수야!' };
+  },
+  // 들이·무게 더하기
+  g3_addunit(L, lv) {
+    if (lv !== 'g3') return null;
+    const kg = Math.random() < .5; const a1 = R(1, 3), b1 = R(1, 6) * 100, a2 = R(1, 3), b2 = R(1, 9 - b1 / 100) * 100;
+    const [U, u] = kg ? ['kg', 'g'] : ['L', 'mL']; const tot = (a1 + a2) * 1000 + b1 + b2;
+    return { t: kg ? '무게 더하기' : '들이 더하기', i: kg ? '⚖️' : '🧃', a: tot, q: `${kg ? '수박' : '물통'} 두 개가 있어. <b>${a1}${U} ${b1}${u}</b>와 <b>${a2}${U} ${b2}${u}</b>야. 모두 몇 <b>${u}</b>일까?`, h: `${U}끼리 ${a1 + a2}${U}, ${u}끼리 ${b1 + b2}${u} → ${a1 + a2}${U} = ${(a1 + a2) * 1000}${u}`, tip: `1${U}는 1000${u}야! 같은 단위끼리 더해 봐.` };
+  },
+  // 분·초
+  g3_sec(L, lv) {
+    if (lv !== 'g3') return null;
+    const m = R(1, 4), s = R(1, 5) * 10; const toS = Math.random() < .55;
+    if (toS) return { t: '시간 단위', i: '⏱️', a: m * 60 + s, q: `줄넘기를 <b>${m}분 ${s}초</b> 동안 했어. 모두 몇 <b>초</b>일까?`, h: `1분 = 60초 → ${m}분 = ${m * 60}초, ${m * 60} + ${s}`, tip: '1분은 60초야!' };
+    return { t: '시간 단위', i: '⏱️', a: s, q: `달리기 기록은 <b>${m * 60 + s}초</b>야. 이건 ${m}분 □초야. <b>□</b>는 얼마일까?`, h: `${m * 60 + s} − ${m * 60} (${m}분 = ${m * 60}초)`, tip: '60초를 1분으로 바꾸고 남은 초를 찾아봐!' };
+  },
+});
+// 학년별 문제 묶음에 새 유형 추가
+[['k', ['gapnum', 'finger'], ['k_dice', 'k_more', 'g1_split']],
+ ['g1', ['gapnum', 'finger'], ['k_dice', 'g1_split', 'g1_addtable', 'g1_clockplus']],
+ ['g2', ['gapnum', 'g2_skip', 'g2_mcm'], ['g2_multable', 'g2_place', 'g2_tri', 'g1_clockplus']],
+ ['g3', ['g2_skip', 'g3_fraccmp', 'g3_addunit', 'g3_sec'], ['g3_rem', 'g3_vmul', 'g2_multable']]
+].forEach(([lv, ar, geo]) => { AR_POOL[lv].push(...ar); GEO_POOL[lv].push(...geo); });
+Object.assign(TYPE_NAME, { k_dice: '주사위 놀이', k_more: '몇 개 더 많을까', g1_split: '모으기·가르기', g1_addtable: '덧셈표 빈칸', g2_multable: '곱셈표 빈칸', g1_clockplus: '몇 시간 뒤 시각', g2_place: '수 모형·자릿값', g2_tri: '도형 조각 세기', g3_rem: '몫과 나머지', g3_vmul: '곱셈 세로셈', gapnum: '빈칸 수 (수의 순서)', finger: '손가락 세기', g2_skip: '뛰어 세기', g2_mcm: 'm와 cm', g3_fraccmp: '분수 크기 비교', g3_addunit: '들이·무게 더하기', g3_sec: '분과 초' });
+Object.assign(FAM, { k_dice: 'cnt2', finger: 'cnt2', g1_addtable: 'tbl', g2_multable: 'tbl', g1_clockplus: 'clk', g3_sec: 'clk', g2_mcm: 'unit', g3_addunit: 'unit', g3_rem: 'grp', g2_skip: 'seqf', gapnum: 'seqf' });
+
 function newGame(lv, opt) {
   for (let i = 0; i < 60; i++) { const g = makeGame(lv, opt); if (g) return g; }
   for (let i = 0; i < 60; i++) { const g = makeGame(lv, { ...(opt || {}), recent: [], strict: false }); if (g) return g; } // 고른 유형이 적을 때
   return makeGame(lv);
 }
-if (typeof module !== 'undefined') module.exports = { newGame, LV, typeList, TYPE_NAME };
+
+// ===== 문해력 · 논리 문제 (보기 고르기 포함) =====
+// 보기 문제: { choices:[...], a: 정답 번호(1부터) }
+const KIDS = KIDNAMES;
+const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + ((c >= 0 && c % 28) ? a : b); };
+function mkChoice(correct, wrongs, n = 3) {
+  const opts = shuffle([correct, ...shuffle(wrongs.filter(w => w !== correct)).slice(0, n - 1)]);
+  return { choices: opts, a: opts.indexOf(correct) + 1 };
+}
+const LIT = {
+  // 이야기 읽고 개수 세기
+  read_count(lv) {
+    const n = pick(KIDS), big = lv === 'k' ? 5 : lv === 'g1' ? 9 : 20;
+    const [f1, f2] = shuffle([['사과', '개'], ['귤', '개'], ['딸기', '개'], ['쿠키', '개'], ['사탕', '개']]).slice(0, 2);
+    const a = R(1, big), b = R(1, big);
+    const sub = lv !== 'k' && Math.random() < .4 && a > b;
+    const story = sub
+      ? `${josa(n, '은', '는')} 바구니에 ${f1[0]} ${a}${f1[1]}를 담았어요. 집에 오는 길에 친구에게 ${b}${f1[1]}를 나눠 주었어요.`
+      : `${josa(n, '은', '는')} 아침에 ${f1[0]} ${a}${f1[1]}를 먹었어요. 저녁에는 ${f2[0]} ${b}${f2[1]}를 먹었어요.`;
+    const q = sub ? `${n}의 바구니에 남은 ${f1[0]}는 몇 개일까요?` : `${josa(n, '이', '가')} 오늘 먹은 과일과 간식은 모두 몇 개일까요?`;
+    return { t: '읽기 탐정', i: '📖', a: sub ? a - b : a + b, q: `<div class="story">${story}</div>${q}`, h: sub ? `처음 ${a}개에서 나눠 준 ${b}개를 빼 봐!` : `아침 ${a}개 + 저녁 ${b}개`, tip: '글을 천천히 읽고 숫자에 동그라미를 쳐 봐!' };
+  },
+  // 누가 / 어디 / 무엇
+  read_who(lv) {
+    const [a, b, c] = shuffle(KIDS).slice(0, 3);
+    const acts = shuffle([['그림을 그렸어요', '그림을 그린'], ['줄넘기를 했어요', '줄넘기를 한'], ['책을 읽었어요', '책을 읽은'], ['노래를 불렀어요', '노래를 부른'], ['블록을 쌓았어요', '블록을 쌓은']]).slice(0, 3);
+    const places = shuffle(['놀이터', '도서관', '공원', '수영장', '할머니 댁', '미술관']).slice(0, 3);
+    const mode = lv === 'k' ? 'who' : pick(['who', 'where']);
+    const story = `${josa(a, '은', '는')} ${places[0]}에서 ${acts[0][0]}. ${josa(b, '은', '는')} ${places[1]}에서 ${acts[1][0]}. ${josa(c, '은', '는')} ${places[2]}에서 ${acts[2][0]}.`;
+    const k = R(0, 2), who = [a, b, c][k];
+    if (mode === 'who') return { t: '읽기 탐정', i: '📖', ...mkChoice(who, [a, b, c]), q: `<div class="story">${story}</div><b>${acts[k][1]}</b> 친구는 누구일까요?`, h: `'${acts[k][0].replace('어요', '')}'라는 말을 글에서 찾아봐!`, tip: '질문에 나온 낱말을 글에서 찾아봐!' };
+    return { t: '읽기 탐정', i: '📖', ...mkChoice(places[k], places), q: `<div class="story">${story}</div><b>${who}</b>${josa(who,'은','는').slice(who.length)} 어디에 갔을까요?`, h: `글에서 '${who}'의 이름을 찾아봐!`, tip: '질문에 나온 이름을 글에서 찾아봐!' };
+  },
+  // 일이 일어난 순서
+  read_order(lv) {
+    if (lv === 'k') return null;
+    const sets = [
+      ['씨앗을 심었어요.', '물을 주었어요.', '싹이 났어요.', '꽃이 피었어요.'],
+      ['잠에서 깼어요.', '세수를 했어요.', '아침밥을 먹었어요.', '학교에 갔어요.'],
+      ['밀가루를 반죽했어요.', '오븐에 구웠어요.', '빵이 부풀었어요.', '맛있게 먹었어요.'],
+      ['눈이 펑펑 왔어요.', '눈을 굴렸어요.', '눈사람을 만들었어요.', '해가 나서 눈사람이 녹았어요.'],
+      ['애벌레가 알에서 나왔어요.', '잎을 많이 먹었어요.', '번데기가 되었어요.', '나비가 되었어요.']];
+    const s = pick(sets), lab = ['가', '나', '다', '라'];
+    const mix = shuffle(s.map((x, i) => [x, i])); const askFirst = Math.random() < .5;
+    const target = askFirst ? 0 : 3; const idx = mix.findIndex(m => m[1] === target);
+    return { t: '순서 맞추기', i: '🔢', choices: mix.map((m, i) => `${lab[i]}`), a: idx + 1, q: `<div class="story">${mix.map((m, i) => `<b>${lab[i]}</b> ${m[0]}`).join('<br>')}</div>이야기 순서대로 놓았을 때 <b>가장 ${askFirst ? '먼저' : '나중에'}</b> 일어난 일은 무엇일까요?`, h: '무엇이 있어야 다음 일이 일어날 수 있을지 생각해 봐!', tip: '처음 → 다음 → 마지막 순서로 생각해 봐!' };
+  },
+  // 반대말
+  opposite(lv) {
+    const P = [['크다', '작다'], ['길다', '짧다'], ['많다', '적다'], ['무겁다', '가볍다'], ['빠르다', '느리다'], ['높다', '낮다'], ['덥다', '춥다'], ['밝다', '어둡다'], ['넓다', '좁다'], ['깨끗하다', '더럽다'], ['열다', '닫다'], ['웃다', '울다']];
+    const [w, o] = pick(P); const flip = Math.random() < .5; const word = flip ? o : w, ans = flip ? w : o;
+    const wr = shuffle(P.flat().filter(x => x !== w && x !== o)).slice(0, 2);
+    return { t: '반대말 찾기', i: '🔄', ...mkChoice(ans, wr), q: `<b class="word">'${word}'</b>${josa(word,'과','와').slice(word.length)} 뜻이 <b>반대</b>인 말은 무엇일까요?`, h: `'${word}'의 반대 모습을 떠올려 봐!`, tip: '뜻이 서로 반대인 짝꿍 낱말을 찾아봐!' };
+  },
+  // 글자 수 세기
+  syll(lv) {
+    if (lv === 'g3') return null;
+    const W = ['사과', '바나나', '고양이', '코끼리', '자동차', '토끼', '무지개', '해바라기', '아이스크림', '경찰관', '너구리', '비행기', '딸기', '수박', '도서관'];
+    const two = lv !== 'k' && Math.random() < .4; const [a, b] = shuffle(W).slice(0, 2);
+    if (two) return { t: '글자 세기', i: '🔤', a: a.length + b.length, q: `<b class="word">'${a}'</b>${josa(a,'과','와').slice(a.length)} <b class="word">'${b}'</b>의 글자 수를 더하면 모두 몇 글자일까요?`, h: `${a} ${a.length}글자 + ${b} ${b.length}글자`, tip: '한 글자씩 손뼉을 치면서 세어 봐!' };
+    return { t: '글자 세기', i: '🔤', a: a.length, q: `<b class="word">'${a}'</b>${josa(a,'은','는').slice(a.length)} 몇 글자일까요?`, h: '한 글자씩 손뼉을 치면서 읽어 봐!', tip: '한 글자씩 손뼉을 치면서 세어 봐!' };
+  },
+  // 빈칸 낱말
+  fill(lv) {
+    if (lv === 'k') return null;
+    const S = [['비가 와서 (   )을 썼어요.', '우산', ['모자', '장갑']], ['배가 고파서 (   )을 먹었어요.', '밥', ['물감', '공책']], ['너무 졸려서 (   )에 누웠어요.', '침대', ['냉장고', '신발장']],
+      ['이를 깨끗이 하려고 (   )을 했어요.', '양치', ['색칠', '줄넘기']], ['추워서 두꺼운 (   )를 입었어요.', '외투', ['수영복', '반바지']], ['책을 빌리러 (   )에 갔어요.', '도서관', ['수영장', '빵집']],
+      ['편지를 보내려고 (   )에 갔어요.', '우체국', ['미용실', '놀이터']], ['어두워서 (   )을 켰어요.', '전등', ['선풍기', '수도']]];
+    const [s, c, w] = pick(S);
+    return { t: '알맞은 낱말', i: '✏️', ...mkChoice(c, w), q: `<div class="story">${s}</div>(   )에 들어갈 알맞은 낱말은 무엇일까요?`, h: '낱말을 하나씩 넣어서 소리 내어 읽어 봐!', tip: '빈칸에 넣어 읽었을 때 자연스러운 말을 찾아봐!' };
+  },
+  // 비슷한 말 (2·3학년)
+  similar(lv) {
+    if (lv === 'k' || lv === 'g1') return null;
+    const P = [['기쁘다', '즐겁다'], ['예쁘다', '아름답다'], ['빠르다', '재빠르다'], ['크다', '커다랗다'], ['조용하다', '고요하다'], ['무섭다', '두렵다'], ['가득하다', '꽉 차다'], ['시작하다', '출발하다']];
+    const [w, s] = pick(P); const wr = shuffle(P.map(p => p[1]).filter(x => x !== s)).slice(0, 2);
+    return { t: '비슷한 말', i: '🤝', ...mkChoice(s, wr), q: `<b class="word">'${w}'</b>${josa(w,'과','와').slice(w.length)} 뜻이 <b>비슷한</b> 말은 무엇일까요?`, h: `'${w}' 대신 넣어도 뜻이 통하는 말을 찾아봐!`, tip: '바꿔 써도 뜻이 비슷한 말을 찾아봐!' };
+  },
+};
+const LOGIC = {
+  // 크기 비교 추론
+  chain(lv) {
+    const an = shuffle(KIDS).slice(0, lv === 'k' ? 2 : 3);
+    const prop = pick([['키가 커요', '키가 더 큰', '키가 가장 큰', '키가 가장 작은'], ['달리기가 빨라요', '달리기가 더 빠른', '달리기가 가장 빠른', '달리기가 가장 느린'], ['나이가 많아요', '나이가 더 많은', '나이가 가장 많은', '나이가 가장 적은']]);
+    if (an.length === 2) { const [a, b] = an; return { t: '누가 더?', i: '🧠', ...mkChoice(a, an, 2), q: `<div class="story">${josa(a, '은', '는')} ${b}보다 ${prop[0]}.</div>둘 중에 <b>${prop[1]}</b> 친구는 누구일까요?`, h: `'${josa(a, '은', '는')} ${b}보다'라는 말을 잘 봐!`, tip: '누가 누구보다 더한지 차례대로 생각해 봐!' }; }
+    const [a, b, c] = an; const big = Math.random() < .5;
+    return { t: '논리 추리', i: '🧠', ...mkChoice(big ? a : c, an), q: `<div class="story">${josa(a, '은', '는')} ${b}보다 ${prop[0]}. ${josa(b, '은', '는')} ${c}보다 ${prop[0]}.</div><b>${big ? prop[2] : prop[3]}</b> 친구는 누구일까요?`, h: `${a} → ${b} → ${c} 순서로 줄을 세워 봐!`, tip: '한 줄로 세워 보면 쉽게 알 수 있어!' };
+  },
+  // 자리 추리
+  seat(lv) {
+    const [a, b, c] = shuffle(KIDS).slice(0, 3);
+    const mid = Math.random() < .5;
+    return { t: '자리 추리', i: '🪑', ...mkChoice(mid ? b : a, [a, b, c]), q: `<div class="story">세 친구가 한 줄로 앉았어요. ${josa(a, '은', '는')} ${b}의 왼쪽에 앉았어요. ${josa(c, '은', '는')} ${b}의 오른쪽에 앉았어요.</div>${mid ? '<b>가운데</b>' : '<b>맨 왼쪽</b>'}에 앉은 친구는 누구일까요?`, h: `종이에 ${b}를 먼저 쓰고, 왼쪽과 오른쪽에 친구를 놓아 봐!`, tip: '그림으로 그려 보면 쉬워!' };
+  },
+  // 다른 하나 찾기 (분류)
+  oddone(lv) {
+    const G = { 과일: ['사과', '바나나', '포도', '딸기', '수박'], 동물: ['토끼', '고양이', '코끼리', '곰', '돼지'], 탈것: ['자동차', '버스', '기차', '비행기', '자전거'], 색깔: ['빨강', '파랑', '노랑', '초록', '보라'] };
+    const ks = shuffle(Object.keys(G)); const main = shuffle(G[ks[0]]).slice(0, 3), odd = pick(G[ks[1]]);
+    return { t: '다른 하나', i: '🔎', ...mkChoice(odd, main, 4), q: `다음 중에서 <b>종류가 다른 하나</b>는 무엇일까요?`, h: `나머지 셋은 모두 '${ks[0]}'이야!`, tip: '같은 무리끼리 묶어 봐!' };
+  },
+  // 숫자 스도쿠 한 줄
+  sudoku(lv) {
+    const n = lv === 'k' || lv === 'g1' ? 3 : 4; const row = shuffle([...Array(n)].map((_, i) => i + 1)); const k = R(0, n - 1);
+    const cells = row.map((v, i) => `<span class="sdc${i === k ? ' q' : ''}">${i === k ? '?' : v}</span>`).join('');
+    return { t: '숫자 퍼즐', i: '🧩', a: row[k], q: `1부터 ${n}까지의 숫자가 <b>한 번씩</b> 들어가요. <b>?</b>에 들어갈 숫자는 무엇일까요?<div class="sdrow">${cells}</div>`, h: `1부터 ${n}까지 중에서 아직 안 나온 숫자를 찾아봐!`, tip: '이미 나온 숫자를 하나씩 지워 봐!' };
+  },
+  // 저울 추리 (그림 대입)
+  scale(lv) {
+    if (lv === 'k') return null;
+    const [x, y] = pick([['🍎', '🍓'], ['🐻', '🐭'], ['💎', '🍬'], ['🍌', '🍇']]);
+    const m = R(2, lv === 'g1' ? 3 : 5), w = R(1, lv === 'g1' ? 3 : 9);
+    return { t: '저울 추리', i: '⚖️', a: m * w, q: `<div class="story">${x} 1개의 무게는 ${y} ${m}개와 같아요.<br>${y} 1개의 무게는 <b>${w}</b>이에요.</div>${x} 1개의 무게는 얼마일까요?`, h: `${y} ${m}개 → ${w}${m > 1 ? ' × ' + m : ''}`, tip: '같은 무게끼리 바꿔 넣어 봐!' };
+  },
+  // 참 거짓 상자
+  boxes(lv) {
+    if (lv === 'k') return null;
+    const cols = ['빨간', '파란', '노란']; const ans = R(0, 2); const others = [0, 1, 2].filter(i => i !== ans);
+    const [e1, e2] = shuffle(others);
+    return { t: '보물 상자 추리', i: '🎁', ...mkChoice(`${cols[ans]} 상자`, cols.map(c => c + ' 상자')), q: `<div class="story">상자 3개 중 하나에만 사탕이 들어 있어요.<br>· ${cols[e1]} 상자는 비어 있어요.<br>· ${cols[e2]} 상자에는 사탕이 없어요.</div>사탕은 어느 상자에 있을까요?`, h: '사탕이 없는 상자를 하나씩 지워 봐!', tip: '아닌 것을 지우면 답이 남아!' };
+  },
+};
+// ----- 수학 문장제 · 수 논리 (추가) -----
+Object.assign(LOGIC, {
+  // 다른 수 찾기 (짝수·홀수 / 몇씩 뛰어 세기 규칙에서 벗어난 수)
+  numodd(lv) {
+    const step = lv === 'k' ? 1 : lv === 'g1' ? 2 : pick([2, 5, 10]); const st = R(1, lv === 'g3' ? 50 : 10) * (step === 1 ? 1 : 1);
+    const seq = [...Array(5)].map((_, i) => st + i * step); const k = R(1, 4); const wrong = seq[k] + (Math.random() < .5 ? 1 : -1) * (step === 1 ? R(2, 3) : 1);
+    if (wrong < 1 || seq.includes(wrong)) return null; const shown = seq.slice(); shown[k] = wrong;
+    return { t: '규칙에서 벗어난 수', i: '🔎', a: wrong, q: `${step}씩 커지는 수를 차례로 늘어놓았는데, <b>한 수가 틀렸어요</b>. 틀린 수는 무엇일까요?<div class="sdrow">${shown.map(v => `<span class="sdc" style="width:auto;min-width:54px;padding:0 8px">${v}</span>`).join('')}</div>`, h: `${st}부터 ${step}씩 세어 봐! ${seq.join(', ')}`, tip: '옆 수와 얼마씩 차이 나는지 하나씩 확인해 봐!' };
+  },
+  // 수 크기 추리 (조건으로 수 찾기)
+  numchain(lv) {
+    const max = lv === 'k' ? 10 : lv === 'g1' ? 30 : lv === 'g2' ? 100 : 500; const d1 = R(1, lv === 'k' ? 3 : 9), d2 = R(1, lv === 'k' ? 3 : 9);
+    const c = R(1, max - d1 - d2), b = c + d2, a = b + d1;
+    return { t: '수 추리', i: '🧠', a, q: `<div class="story">ㄷ은 <b>${c}</b>이에요.<br>ㄴ은 ㄷ보다 <b>${d2}</b> 커요.<br>ㄱ은 ㄴ보다 <b>${d1}</b> 커요.</div><b>ㄱ</b>은 얼마일까요?`, h: `ㄴ = ${c} + ${d2} = ${b}, ㄱ = ${b} + ${d1}`, tip: '아는 수부터 차례대로 구해 봐!' };
+  },
+});
+Object.assign(LIT, {
+  // 긴 문장제: 필요한 수만 골라 계산
+  read_ask(lv) {
+    const n = pick(KIDS), max = lv === 'k' ? 5 : lv === 'g1' ? 15 : lv === 'g2' ? 40 : 200;
+    const a = R(2, max), b = R(1, max), age = { k: R(5, 7), g1: R(7, 8), g2: R(8, 9), g3: R(9, 10) }[lv];
+    const it = pick([['연필', '자루'], ['스티커', '장'], ['구슬', '개'], ['색종이', '장']]);
+    const sub = lv !== 'k' && a > b && Math.random() < .5;
+    const story = `${josa(n, '은', '는')} <b>${age}살</b>이에요. ${josa(it[0],'을','를')} <b>${a}${it[1]}</b> 갖고 있어요. ${sub ? '어제' : '생일에'} 친구에게서 ${it[0]} <b>${b}${it[1]}</b>${josa(it[1],'을','를').slice(it[1].length)} ${sub ? '빌렸다가 오늘 모두 돌려주었어요' : '선물로 받았어요'}. 집에는 강아지가 <b>${R(1, 3)}마리</b> 있어요.`;
+    const ans = sub ? a : a + b;
+    return { t: '문장제 (필요한 수 찾기)', i: '📖', a: ans, q: `<div class="story">${story}</div>지금 ${n}에게 있는 ${josa(it[0],'은','는')} 몇 ${it[1]}일까요?`, h: sub ? `빌린 ${b}${it[1]}을 다시 돌려줬으니, 처음 그대로야!` : `${a} + ${b} (나이와 강아지 수는 필요 없어!)`, tip: '문제에 필요 없는 수도 숨어 있어. 필요한 수만 골라 봐!' };
+  },
+});
+const CHOICE_TYPES = new Set(['read_who', 'read_order', 'opposite', 'fill', 'similar', 'chain', 'seat', 'oddone', 'boxes']);
+Object.assign(TYPE_NAME, { read_ask: '문장제 (필요한 수 찾기)', numodd: '규칙에서 벗어난 수', numchain: '수 추리', read_count: '이야기 읽고 셈하기', read_who: '읽고 찾기 (누가·어디)', read_order: '이야기 순서', opposite: '반대말', syll: '글자 수 세기', fill: '알맞은 낱말', similar: '비슷한 말',
+  chain: '크기 비교 추리', seat: '자리 추리', oddone: '다른 하나 찾기', sudoku: '숫자 퍼즐', scale: '저울 추리', boxes: '상자 추리' });
+const ALLGEN = Object.assign({}, LIT, LOGIC);
+// ===== 8단계 지도 =====
+const STAGES = [
+  { name: '연산 출발', ic: '🚓', place: '경찰서 앞', types: ['calc', 'gapnum', 'finger', 'k_dice', 'g1_split', 'g2_place', 'g3_rem', 'g3_vmul', 'word', 'near', 'ten', 'compare', 'money', 'mulpic', 'divpic', 'balance', 'share'] },
+  { name: '규칙 탐정', ic: '🧩', place: '골목길', types: ['symbol', 'seq', 'k_pattern', 'train', 'rev', 'sudoku', 'g2_skip', 'g1_addtable', 'g2_multable'] },
+  { name: '읽기 탐정', ic: '📖', place: '마을 도서관', types: ['read_count', 'read_ask', 'word'] },
+  { name: '도형 마을', ic: '🔷', place: '꽃 공원', types: ['g2_tri', 'g3_fraccmp', 'k_shapes', 'k_corners', 'g2_poly', 'g2_blocks', 'g3_angle', 'g3_circle', 'g3_fraction', 'k_position'] },
+  { name: '시계·측정', ic: '⏰', place: '나무다리', types: ['g1_clockplus', 'g2_mcm', 'g3_addunit', 'g3_sec', 'g1_clock', 'g2_clockmin', 'g3_time', 'k_long', 'g2_ruler', 'g1_cups', 'g3_cups', 'g3_unit', 'g3_km', 'k_seesaw', 'g2_calendar'] },
+  { name: '논리 숲', ic: '🧠', place: '깊은 숲', types: ['sudoku', 'scale', 'numodd', 'cards'] },
+  { name: '자료 탐험', ic: '📊', place: '언덕길', types: ['k_more', 'g2_graph', 'g2_table', 'g3_picto', 'k_sort', 'g1_oddeven', 'g1_bundle', 'g3_decimal', 'read_count'] },
+  { name: '루피 잡기', ic: '🦝', place: '루피의 동굴', types: null },
+];
+function stageTypes(si, lv) {
+  const all = new Set([...AR_POOL[lv], ...GEO_POOL[lv], ...Object.keys(ALLGEN).filter(t => ALLGEN[t](lv) !== null || true)]);
+  const ok = t => { if (AR_POOL[lv].includes(t) || GEO_POOL[lv].includes(t)) return true; if (ALLGEN[t]) { for (let i = 0; i < 5; i++) if (ALLGEN[t](lv)) return true; } return false; };
+  if (STAGES[si].types === null) return [...all].filter(ok);
+  let t = STAGES[si].types.filter(ok);
+  if (t.length < 2) t = t.concat([...AR_POOL[lv]].slice(0, 3));
+  return [...new Set(t)];
+}
+function genOne(ty, lv) {
+  for (let i = 0; i < 40; i++) {
+    let r = null;
+    if (ALLGEN[ty]) r = ALLGEN[ty](lv);
+    else if (GEO[ty]) r = GEO[ty](lv);
+    else if (GEN[ty]) r = GEN[ty](startL(lv), lv);
+    if (r && r.a >= 1) { r.type = ty; r.t = r.t || (TYPE_INFO[ty] && TYPE_INFO[ty].t) || TYPE_NAME[ty]; r.i = r.i || (TYPE_INFO[ty] && TYPE_INFO[ty].i) || '⭐'; return r; }
+  }
+  return null;
+}
+// 한 단계 문제 묶음: 같은 유형이 연달아 나오지 않게 고루 섞기
+function makeStage(si, lv, n, off) {
+  off = new Set(off || []);
+  let ts = stageTypes(si, lv).filter(t => !off.has(t)); if (!ts.length) ts = stageTypes(si, lv);
+  const out = []; let bag = [];
+  while (out.length < n) {
+    if (!bag.length) bag = shuffle(ts.slice());
+    let ty = bag.shift(); if (out.length && out[out.length - 1].type === ty && bag.length) { bag.push(ty); ty = bag.shift(); }
+    const r = genOne(ty, lv); if (r) out.push(r);
+    else ts = ts.filter(t => t !== ty);
+    if (!ts.length) break;
+  }
+  return out;
+}
+// ===== 난이도 (하 0 · 중 1 · 상 2) =====
+// 같은 유형을 여러 개 만들어 '숫자 크기 + 계산 단계 수'로 점수를 매기고, 난이도에 맞는 구간에서 고름
+function qScore(r) {
+  const txt = (r.q || '').replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<[^>]+>/g, ' ');
+  const nums = (txt.match(/\d+/g) || []).map(Number); const mx = Math.max(r.a || 0, ...nums, 1);
+  const ops = ((r.h || '').match(/[+−\-×÷]/g) || []).length;
+  return Math.log10(mx + 1) + .45 * ops + (/60분|받아|1000|km|L|kg/.test(txt + r.h) ? .4 : 0) + Math.random() * .15;
+}
+function genScored(ty, lv, d) {
+  const c = []; for (let i = 0; i < 9; i++) { const r = genOne(ty, lv); if (r) c.push([qScore(r), r]); }
+  if (!c.length) return null; c.sort((a, b) => a[0] - b[0]);
+  const n = c.length, lo = Math.floor(n * d / 3), hi = Math.max(lo + 1, Math.floor(n * (d + 1) / 3));
+  return c[R(lo, hi - 1)][1];
+}
+const EASY_T = new Set(['near', 'share', 'compare', 'k_shapes', 'k_sort', 'k_position', 'k_long', 'g1_cups', 'k_seesaw', 'ten', 'g1_oddeven', 'k_corners', 'g1_clock', 'symbol', 'read_count']);
+const HARD_T = new Set(['rev', 'train', 'balance', 'divpic', 'g3_time', 'numodd', 'read_ask', 'cards', 'g2_calendar', 'g3_decimal', 'scale', 'g2_ruler', 'g3_picto', 'mulpic']);
+const typeW = (t, d) => d === 0 ? (EASY_T.has(t) ? 3 : HARD_T.has(t) ? .3 : 1) : d === 2 ? (HARD_T.has(t) ? 3 : EASY_T.has(t) ? .3 : 1) : 1;
+function pickW(arr, d) { let s = arr.reduce((a, t) => a + typeW(t, d), 0), r = Math.random() * s; for (const t of arr) { r -= typeW(t, d); if (r <= 0) return t; } return arr[arr.length - 1]; }
+// 보물찾기에서도 쓰는 문장제·수 논리 (숫자로 답하는 것만)
+['read_count', 'read_ask', 'sudoku', 'scale', 'numodd'].forEach(t => { if (!GEN[t]) GEN[t] = (L, lv) => ALLGEN[t](lv); });
+if (!AR_POOL.k.includes('read_count')) { AR_POOL.k.push('read_count', 'sudoku', 'numodd'); ['g1', 'g2', 'g3'].forEach(lv => AR_POOL[lv].push('read_count', 'read_ask', 'sudoku', 'scale', 'numodd')); }
+Object.assign(FAM, { read_count: 'story', read_ask: 'story', sudoku: 'puz', numodd: 'seqf' });
+if (typeof module !== 'undefined') module.exports = { makeStage, stageTypes, STAGES, TYPE_NAME, CHOICE_TYPES, genOne, genScored, qScore, pickW };
 
 </script>
 <script>
