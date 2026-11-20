@@ -643,10 +643,16 @@ function makeGame(lv, opt) {
     const dg = st.map(x => x.piece); st.push({ type: 'code', lock: true, digits: dg, a: dg.join('') }); return st;
   }
   opt = opt || {}; const off = new Set(opt.off || []), recent = opt.recent || [], strict = opt.strict !== false;
-  const order = arr => { const sh = shuffle(arr.filter(t => !off.has(t))); return sh.filter(t => !recent.includes(t)).concat(sh.filter(t => recent.includes(t))); };
+  // 바로 앞 판(recent 앞 4개)에 나온 유형은 맨 뒤로: 새 판은 앞 판과 다른 유형으로 채움
+  const last = recent.slice(0, 4), older = recent.slice(4);
+  const tier = t => last.includes(t) ? 2 : older.includes(t) ? 1 : 0;
+  const order = arr => shuffle(arr.filter(t => !off.has(t))).sort((x, y) => tier(x) - tier(y));
   const ar = order(AR_POOL[lv]), gp = order([...new Set(GEO_POOL[lv])]);
   const rr = Math.random(); let nGeo = rr < .3 ? 0 : rr < .8 ? 1 : 2; // 연산만 30% · 3:1 50% · 2:2 20%
   nGeo = Math.min(nGeo, gp.length); if (4 - nGeo > ar.length) nGeo = Math.min(gp.length, 4 - ar.length);
+  // 앞 판과 겹치지 않는 연산 유형이 모자라면 새 영역 문제를 늘림
+  const freshAr = ar.filter(t => tier(t) < 2).length, freshGeo = gp.filter(t => tier(t) < 2).length;
+  while (4 - nGeo > freshAr && nGeo < Math.min(2, freshGeo)) nGeo++;
   const nAr = 4 - nGeo;
   const stages = [], fams = new Set();
   const fresh = ty => !strict || !FAM[ty] || !fams.has(FAM[ty]);
